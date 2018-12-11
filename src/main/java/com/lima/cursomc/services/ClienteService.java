@@ -1,5 +1,6 @@
 package com.lima.cursomc.services;
 
+import java.awt.image.BufferedImage;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.List;
@@ -8,6 +9,7 @@ import java.util.Optional;
 import javax.transaction.Transactional;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -44,6 +46,12 @@ public class ClienteService {
 	
 	//@Autowired
 	//private S3Service s3Service;
+	
+	@Autowired
+	private ImageService imageService;
+	
+	@Value("${img.prefix.client.profile}")
+	private String prefix;
 
 	public Cliente find(Integer id) {
 		UserSS user = UserService.authenticated();
@@ -122,13 +130,12 @@ public class ClienteService {
 				throw new AuthorizationException("Acesso negado");
 			}
 			
-			//URI uri = s3Service.uploadFile(multipartFile);
+			BufferedImage jpgImage = imageService.getJpgImageFromFile(multipartFile);
+			jpgImage.getClass(); // Just to it not be marked as unused
+			String fileName = prefix + user.getId() + ".jpg";
+			URI uri = new URI("http://not.implemented.yet/" + fileName);
 			
-			Cliente cli = find(user.getId());
-			URI uri = new URI("http://not.implemented.yet/" + cli.getEmail().split("@")[0]);
-			cli.setImageUrl(uri.toString());
-			repo.save(cli);
-			
+			//return s3Service.uploadFile(imageService.getInputStream(jpgImage, "jpg"), fileName, "image");
 			return uri;
 		} catch (URISyntaxException e) {
 			throw new RuntimeException("Erro ao converter URL para URI");
